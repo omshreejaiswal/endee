@@ -1,0 +1,99 @@
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv
+
+# IDE & Editor
+.vscode/
+.idea/
+.project
+.pydevproject
+.settings/
+*.swp
+*.swo
+*~
+.sublime-project
+.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+.~*
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Database & Cache
+*.db
+*.sqlite
+*.sqlite3
+.cache/
+cache/
+**/embeddings/
+
+# Logs
+*.log
+logs/
+*.log.gz
+
+# Node (if using npm for frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Project Specific
+data/cache/
+data/embeddings/
+embeddings/
+.endee/
+vector_store/
+*.pkl
+*.pickle
+model_cache/

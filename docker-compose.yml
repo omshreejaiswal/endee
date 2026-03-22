@@ -1,0 +1,74 @@
+services:
+  # Endee Vector Database Server (optional, runs in-memory fallback if unavailable)
+  # For production: Use pre-built image or managed Endee service
+  # endee:
+  #   image: endee-io/endee:latest  # When available, use official image
+  #   container_name: endee-server
+  #   ports:
+  #     - "19530:19530"
+  #   environment:
+  #     - LOG_LEVEL=INFO
+  #   volumes:
+  #     - endee_data:/data
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:19530/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #   networks:
+  #     - travel-planner-net
+
+  # FastAPI Backend Server
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: travel-planner-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENDEE_HOST=http://endee:19530
+      - ENDEE_USE_FALLBACK=true
+      - DEBUG=false
+      - LOG_LEVEL=INFO
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    # Removed depends_on: Endee is optional with fallback to in-memory
+    volumes:
+      - ./Backend:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - travel-planner-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Frontend Web Server
+  frontend:
+    image: node:18-alpine
+    container_name: travel-planner-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app:ro
+    working_dir: /app
+    command: npx -y http-server -p 3000 --cors
+    networks:
+      - travel-planner-net
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--output-document=-", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  endee_data:
+    driver: local
+
+networks:
+  travel-planner-net:
+    driver: bridge
