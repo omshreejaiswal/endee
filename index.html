@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            padding: 25px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #38bdf8, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-box::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 80%;
+            animation: slideIn 0.3s ease;
+            word-wrap: break-word;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+            color: white;
+            align-self: flex-end;
+            border-radius: 12px 0 12px 12px;
+        }
+
+        .bot-message {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            align-self: flex-start;
+            border-radius: 0 12px 12px 12px;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #22c55e;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-top: 8px;
+            border-left: 3px solid #22c55e;
+        }
+
+        .card b {
+            color: #22c55e;
+        }
+
+        .input-box {
+            display: flex;
+            gap: 10px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: #38bdf8;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            color: #86efac;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #22c55e;
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✈️ AI Travel Planner</h1>
+            <p>Get personalized travel recommendations powered by AI</p>
+        </div>
+
+        <div class="chat-box" id="chatBox">
+            <div class="empty-state">
+                <div class="empty-state-icon">🌍</div>
+                <p>Start planning your next adventure!</p>
+                <p style="font-size: 12px; opacity: 0.6;">Try: "Plan a 3 day trip to Manali with ₹15000 budget"</p>
+            </div>
+        </div>
+
+        <div class="input-box">
+            <input 
+                id="userInput" 
+                placeholder="Describe your travel plans..." 
+                onkeypress="handleKeyPress(event)"
+            />
+            <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/plan";
+        let isLoading = false;
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter" && !isLoading) {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById("userInput");
+            const chatBox = document.getElementById("chatBox");
+            const sendBtn = document.getElementById("sendBtn");
+            const message = input.value.trim();
+
+            // Validation
+            if (!message) {
+                showError("Please enter a travel query");
+                return;
+            }
+
+            if (message.length > 500) {
+                showError("Query is too long (max 500 characters)");
+                return;
+            }
+
+            // Clear empty state
+            if (chatBox.querySelector(".empty-state")) {
+                chatBox.innerHTML = "";
+            }
+
+            // Add user message
+            const userDiv = document.createElement("div");
+            userDiv.className = "message user-message";
+            userDiv.textContent = message;
+            chatBox.appendChild(userDiv);
+            input.value = "";
+            input.focus();
+
+            // Show loading
+            const loadingDiv = document.createElement("div");
+            loadingDiv.className = "message bot-message";
+            loadingDiv.innerHTML = '<div class="loading"><span>Fetching recommendations</span><div class="spinner"></div></div>';
+            chatBox.appendChild(loadingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Disable input
+            isLoading = true;
+            input.disabled = true;
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: message })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                loadingDiv.remove();
+
+                // Process response
+                if (data.error) {
+                    const errorDiv = document.createElement("div");
+                    errorDiv.className = "message bot-message error-message";
+                    errorDiv.innerHTML = `❌ Server Error: ${escapeHtml(data.error)}`;
+                    chatBox.appendChild(errorDiv);
+                } else if (data.response && typeof data.response === 'object') {
+                    // Validate all required fields are strings
+                    const plan = data.response;
+                    const requiredFields = ["itinerary", "hotels", "food", "routes", "budget", "recommendations"];
+                    let allValid = true;
+                    
+                    for (let field of requiredFields) {
+                        if (field in plan) {
+                            if (typeof plan[field] !== 'string') {
+                                console.warn(`Field '${field}' is not a string:`, plan[field]);
+                                plan[field] = String(plan[field]);
+                            }
+                        }
+                    }
+                    
+                    displayPlan(plan, chatBox);
+                } else {
+                    showError("Unexpected response format from server");
+                }
+            } catch (error) {
+                loadingDiv.remove();
+                const errorDiv = document.createElement("div");
+                errorDiv.className = "message bot-message error-message";
+                errorDiv.innerHTML = `❌ Error: ${error.message || "Failed to fetch plan from server"}`;
+                chatBox.appendChild(errorDiv);
+                console.error("Error:", error);
+            } finally {
+                isLoading = false;
+                input.disabled = false;
+                sendBtn.disabled = false;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        function displayPlan(plan, chatBox) {
+            const responseDiv = document.createElement("div");
+            responseDiv.className = "message bot-message";
+
+            let html = "";
+
+            // Itinerary
+            if (plan.itinerary) {
+                html += `<div class="section-title">📅 Itinerary</div><div>${escapeHtml(plan.itinerary)}</div>`;
+            }
+
+            // Hotels
+            if (plan.hotels) {
+                html += `<div class="card"><b>🏨 Hotels</b><br>${escapeHtml(plan.hotels)}</div>`;
+            }
+
+            // Food
+            if (plan.food) {
+                html += `<div class="card"><b>🍽️ Food & Cuisine</b><br>${escapeHtml(plan.food)}</div>`;
+            }
+
+            // Routes
+            if (plan.routes) {
+                html += `<div class="card"><b>🛣️ Routes & Transport</b><br>${escapeHtml(plan.routes)}</div>`;
+            }
+
+            // Budget
+            if (plan.budget || plan.budget_note) {
+                html += `<div class="card"><b>💰 Budget</b><br>${escapeHtml(plan.budget || "See note below")}<br><em>${escapeHtml(plan.budget_note || "")}</em></div>`;
+            }
+
+            // Recommendations
+            if (plan.recommendations) {
+                html += `<div class="card"><b>⭐ Recommendations</b><br>${escapeHtml(plan.recommendations)}</div>`;
+            }
+
+            // Error message
+            if (plan.error) {
+                html = `<div class="error-message">⚠️ ${escapeHtml(plan.error)}</div>`;
+            }
+
+            responseDiv.innerHTML = html || "<p>No recommendations available</p>";
+            chatBox.appendChild(responseDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showError(message) {
+            const chatBox = document.getElementById("chatBox");
+            const errorDiv = document.createElement("div");
+            errorDiv.className = "message bot-message error-message";
+            errorDiv.textContent = `⚠️ ${message}`;
+            chatBox.appendChild(errorDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Focus on load
+        window.addEventListener("load", () => {
+            document.getElementById("userInput").focus();
+        });
+    </script>
+</body>
+
+</html>
